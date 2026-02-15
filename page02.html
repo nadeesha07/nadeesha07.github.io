@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>සේවක පැමිණීමේ වගුව</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        h2 {
+            text-align: center;
+            color: #764ba2;
+            margin-bottom: 30px;
+            font-size: 18px;
+            font-weight: normal;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .controls input, .controls button {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .controls input {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .controls button {
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .controls button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        td {
+            padding: 12px 10px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        
+        td:first-child {
+            font-weight: 600;
+            background: #f8f9ff;
+            text-align: left;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+        }
+        
+        tr:hover td {
+            background: #f0f4ff;
+        }
+        
+        .cell-present {
+            background: #d4edda !important;
+            color: #155724;
+        }
+        
+        .cell-absent {
+            background: #fff3cd !important;
+            color: #856404;
+        }
+        
+        .cell-off {
+            background: #f8f9fa !important;
+            color: #6c757d;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            padding: 5px;
+            font-size: 14px;
+        }
+        
+        input[type="text"]:focus {
+            outline: 2px solid #667eea;
+            border-radius: 4px;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .legend-box {
+            width: 30px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .export-btn {
+            flex: 1;
+            padding: 15px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .export-excel {
+            background: linear-gradient(135deg, #217346 0%, #155a2e 100%);
+        }
+        
+        .export-csv {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .template-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+        }
+
+        .template-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .template-controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .template-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #217346 0%, #155a2e 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .template-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(33, 115, 70, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>සේවක පැමිණීමේ වගුව</h1>
+        <h2>Employee Attendance Sheet</h2>
+
+        <!-- Template Download Section -->
+        <div class="template-section">
+            <h3>📥 හිස් ටෙම්ප්ලේට් බාගන්න / Download Empty Template</h3>
+            <div class="template-controls">
+                <button class="template-btn" onclick="downloadEmptyTemplate()">
+                    🗓️ මාසික ටෙම්ප්ලේට් (Monthly Template)
+                </button>
+                <button class="template-btn" onclick="downloadWeeklyTemplate()">
+                    📅 සතිපතා ටෙම්ප්ලේට් (Weekly Template)
+                </button>
+                <button class="template-btn" onclick="downloadCustomTemplate()">
+                    ⚙️ අභිරුචි ටෙම්ප්ලේට් (Custom Template)
+                </button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <input type="text" id="employeeName" placeholder="සේවකයාගේ නම / Employee Name">
+            <input type="date" id="startDate" value="2025-10-01">
+            <input type="date" id="endDate" value="2025-10-31">
+            <button onclick="addEmployee()">සේවකයා එක් කරන්න / Add Employee</button>
+            <button onclick="generateDates()">දින ජනනය කරන්න / Generate Dates</button>
+        </div>
+        
+        <div class="table-wrapper">
+            <table id="attendanceTable">
+                <thead>
+                    <tr id="headerRow">
+                        <th>employee_name</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box cell-present"></div>
+                <span>වැඩ කළ දින (8:00 - 17:00)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box cell-absent"></div>
+                <span>නිවාඩු (AB)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box cell-off"></div>
+                <span>වැඩ නොකළ දින (-)</span>
+            </div>
+        </div>
+        
+        <div class="export-buttons">
+            <button class="export-btn export-excel" onclick="exportToExcel()">
+                📊 Excel ලෙස බාගන්න / Download as Excel (.xlsx)
+            </button>
+            <button class="export-btn export-csv" onclick="exportToCSV()">
+                📥 CSV ලෙස බාගන්න / Download as CSV
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let dates = [];
+        
+        function generateDates() {
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(document.getElementById('endDate').value);
+            
+            if (isNaN(startDate) || isNaN(endDate)) {
+                alert('කරුණාකර වලංගු දිනයන් තෝරන්න / Please select valid dates');
+                return;
+            }
+            
+            if (startDate > endDate) {
+                alert('ආරම්භක දිනය අවසාන දිනයට වඩා කලින් විය යුතුය / Start date must be before end date');
+                return;
+            }
+            
+            dates = [];
+            const headerRow = document.getElementById('headerRow');
+            headerRow.innerHTML = '<th>employee_name</th>';
+            
+            let currentDate = new Date(startDate);
+            while (currentDate <= endDate) {
+                const dateStr = currentDate.toISOString().split('T')[0];
+                dates.push(dateStr);
+                const th = document.createElement('th');
+                th.textContent = dateStr;
+                headerRow.appendChild(th);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            updateAllRows();
+        }
+        
+        function addEmployee() {
+            const name = document.getElementById('employeeName').value.trim();
+            if (!name) {
+                alert('කරුණාකර සේවකයාගේ නම ඇතුළත් කරන්න / Please enter employee name');
+                return;
+            }
+            
+            if (dates.length === 0) {
+                alert('පළමුව දින ජනනය කරන්න / Please generate dates first');
+                return;
+            }
+            
+            const tbody = document.getElementById('tableBody');
+            const row = tbody.insertRow();
+            
+            const nameCell = row.insertCell();
+            nameCell.textContent = name;
+            
+            dates.forEach(() => {
+                const cell = row.insertCell();
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = '-';
+                input.addEventListener('input', (e) => updateCellStyle(e.target));
+                input.addEventListener('blur', (e) => validateInput(e.target));
+                cell.appendChild(input);
+                updateCellStyle(input);
+            });
+            
+            document.getElementById('employeeName').value = '';
+        }
+        
+        function updateCellStyle(input) {
+            const value = input.value.trim();
+            const cell = input.parentElement;
+            
+            cell.classList.remove('cell-present', 'cell-absent', 'cell-off');
+            
+            if (value.includes('-') && value.includes(':')) {
+                cell.classList.add('cell-present');
+            } else if (value.toUpperCase() === 'AB') {
+                cell.classList.add('cell-absent');
+            } else if (value === '-') {
+                cell.classList.add('cell-off');
+            }
+        }
+        
+        function validateInput(input) {
+            const value = input.value.trim();
+            
+            if (value === '' || value === '-') {
+                input.value = '-';
+            } else if (value.toUpperCase() === 'AB') {
+                input.value = 'AB';
+            } else if (!value.match(/^\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}$/)) {
+                if (!confirm('වලංගු නොවන ආකෘතිය. "8:00 - 17:00", "AB" හෝ "-" භාවිතා කරන්න. දිගටම කරගෙන යන්නද?')) {
+                    input.value = '-';
+                }
+            }
+            
+            updateCellStyle(input);
+        }
+        
+        function updateAllRows() {
+            const tbody = document.getElementById('tableBody');
+            const rows = tbody.getElementsByTagName('tr');
+            
+            for (let row of rows) {
+                const cells = row.getElementsByTagName('td');
+                const currentCells = cells.length - 1;
+                const requiredCells = dates.length;
+                
+                if (currentCells < requiredCells) {
+                    for (let i = currentCells; i < requiredCells; i++) {
+                        const cell = row.insertCell();
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = '-';
+                        input.addEventListener('input', (e) => updateCellStyle(e.target));
+                        input.addEventListener('blur', (e) => validateInput(e.target));
+                        cell.appendChild(input);
+                        updateCellStyle(input);
+                    }
+                } else if (currentCells > requiredCells) {
+                    for (let i = currentCells; i > requiredCells; i--) {
+                        row.deleteCell(i);
+                    }
+                }
+            }
+        }
+
+        function generateDateRange(startDate, endDate) {
+            const dates = [];
+            let currentDate = new Date(startDate);
+            while (currentDate <= endDate) {
+                dates.push(currentDate.toISOString().split('T')[0]);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            return dates;
+        }
+
+        function downloadEmptyTemplate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            const templateDates = generateDateRange(firstDay, lastDay);
+            createExcelTemplate(templateDates, 'Employee_Attendance_Monthly_Template.xlsx');
+        }
+
+        function downloadWeeklyTemplate() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            
+            const templateDates = generateDateRange(monday, sunday);
+            createExcelTemplate(templateDates, 'Employee_Attendance_Weekly_Template.xlsx');
+        }
+
+        function downloadCustomTemplate() {
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(document.getElementById('endDate').value);
+            
+            if (isNaN(startDate) || isNaN(endDate)) {
+                alert('කරුණාකර වලංගු දිනයන් තෝරන්න / Please select valid dates');
+                return;
+            }
+            
+            if (startDate > endDate) {
+                alert('ආරම්භක දිනය අවසාන දිනයට වඩා කලින් විය යුතුය / Start date must be before end date');
+                return;
+            }
+            
+            const templateDates = generateDateRange(startDate, endDate);
+            createExcelTemplate(templateDates, 'Employee_Attendance_Custom_Template.xlsx');
+        }
+
+        function createExcelTemplate(templateDates, filename) {
+            const wb = XLSX.utils.book_new();
+            
+            const headers = ['employee_name', ...templateDates];
+            const emptyRows = Array(10).fill(null).map(() => ['', ...Array(templateDates.length).fill('-')]);
+            
+            const wsData = [headers, ...emptyRows];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // Set column widths
+            const colWidths = [{ wch: 20 }, ...templateDates.map(() => ({ wch: 12 }))];
+            ws['!cols'] = colWidths;
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+            
+            XLSX.writeFile(wb, filename);
+        }
+        
+        function exportToExcel() {
+            const table = document.getElementById('attendanceTable');
+            const wb = XLSX.utils.book_new();
+            
+            // Prepare data array
+            const data = [];
+            
+            // Headers
+            const headerRow = table.querySelector('#headerRow');
+            const headers = Array.from(headerRow.cells).map(cell => cell.textContent);
+            data.push(headers);
+            
+            // Body rows
+            const tbody = table.querySelector('#tableBody');
+            const rows = tbody.getElementsByTagName('tr');
+            
+            for (let row of rows) {
+                const cells = row.getElementsByTagName('td');
+                const rowData = [];
+                
+                // Employee name
+                rowData.push(cells[0].textContent);
+                
+                // Attendance values
+                for (let i = 1; i < cells.length; i++) {
+                    const input = cells[i].querySelector('input');
+                    rowData.push(input ? input.value : '');
+                }
+                
+                data.push(rowData);
+            }
+            
+            // Create worksheet
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Set column widths
+            const colWidths = [{ wch: 20 }];
+            for (let i = 1; i < headers.length; i++) {
+                colWidths.push({ wch: 12 });
+            }
+            ws['!cols'] = colWidths;
+            
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+            
+            // Generate filename with current date
+            const today = new Date().toISOString().split('T')[0];
+            const filename = `Employee_Attendance_${today}.xlsx`;
+            
+            // Save file
+            XLSX.writeFile(wb, filename);
+        }
+        
+        function exportToCSV() {
+            const table = document.getElementById('attendanceTable');
+            let csv = [];
+            
+            const headerRow = table.querySelector('#headerRow');
+            const headers = Array.from(headerRow.cells).map(cell => cell.textContent);
+            csv.push(headers.join(','));
+            
+            const tbody = table.querySelector('#tableBody');
+            const rows = tbody.getElementsByTagName('tr');
+            
+            for (let row of rows) {
+                const cells = row.getElementsByTagName('td');
+                const rowData = [];
+                
+                rowData.push(cells[0].textContent);
+                
+                for (let i = 1; i < cells.length; i++) {
+                    const input = cells[i].querySelector('input');
+                    rowData.push(input.value);
+                }
+                
+                csv.push(rowData.join(','));
+            }
+            
+            const csvContent = csv.join('\n');
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const today = new Date().toISOString().split('T')[0];
+            const filename = `Employee_Attendance_${today}.csv`;
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Initialize with default dates
+        generateDates();
+    </script>
+</body>
+</html>
